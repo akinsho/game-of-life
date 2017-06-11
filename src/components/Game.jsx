@@ -1,10 +1,6 @@
 import React, { Component } from 'react';
 import styles from './Game.css';
-
-function rect(props) {
-  const { ctx, x, y, width, height } = props;
-  ctx.fillRect(x, y, width, height, height);
-}
+import Cell from './Cell.jsx';
 
 class Game extends Component {
   componentDidMount() {
@@ -15,12 +11,39 @@ class Game extends Component {
     this.updateCanvas();
   }
 
+  createArray(rows) {
+    const arr = [];
+    for (let i = 0; i < rows; i++) {
+      arr[i] = [];
+    }
+    return arr;
+  }
+
+  createLifeAtRandom(theGrid, gridWidth, gridHeight) {
+    for (let i = 0; i < gridHeight; i++) {
+      for (let j = 0; j < gridWidth; j++) {
+        const random = Math.floor(Math.random() * 2);
+        random === 1 ? (theGrid[i][j] = 1) : (theGrid[i][j] = 0);
+      }
+    }
+    return theGrid;
+  }
+
   updateCanvas() {
+    const grdH = 600;
+    const grdW = 600;
+    const theGrid = this.createArray(600);
+    const initGrid = this.createLifeAtRandom(theGrid, grdH, grdW);
     const ctx = this.refs.canvas.getContext('2d');
     ctx.clearRect(0, 0, 600, 600);
     //Draw Children
-    rect({ ctx, x: 10, y: 10, width: 50, height: 50 });
-    rect({ ctx, x: 110, y: 110, width: 50, height: 50 });
+    for (let i = 1; i < grdH; i++) {
+      for (let j = 1; j < grdW; j++) {
+        if (initGrid[i][j] === 1) {
+          Cell({ ctx, x: i, y: j });
+        }
+      }
+    }
   }
 
   render() {
