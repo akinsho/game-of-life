@@ -7,9 +7,6 @@ function rect(props) {
 }
 
 class Game extends Component {
-  constructor(props) {
-    super(props);
-  }
   componentDidMount() {
     this.updateCanvas();
   }
