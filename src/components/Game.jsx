@@ -74,24 +74,24 @@ class Game extends Component {
   findNeighbours(theGrid, x, y) {
     //TODO the directions only change the value to 0 not the score
     const outer = theGrid.length - 1;
-    if (y + 1 > outer || y - 1 < 0 || x + 1 > outer || x - 1 < 0) return 0;
+    const xOutOfBounds = x === 0 || x === outer;
 
-    let up = x + 1;
+    let up = x - 1;
     let right = y + 1;
     let left = y - 1;
-    let down = x - 1;
-    const leftN = theGrid[x][left];
-    const rightN = theGrid[x][right];
-    const top = theGrid[up][y];
-    const bottom = theGrid[down][y];
-    const topLeft = theGrid[up][left];
-    const topRight = theGrid[up][right];
-    const bottomLeft = theGrid[down][left];
-    const bottomRight = theGrid[down][right];
+    let down = x + 1;
+    const leftNeighbour = left ? 0 : theGrid[x][left];
+    const rightNeighbour = right > outer ? 0 : theGrid[x][right];
+    const top = up < 0 ? 0 : theGrid[up][y];
+    const bottom = down > outer ? 0 : theGrid[down][y];
+    const topLeft = up < 0 ? 0 : theGrid[up][left];
+    const topRight = up < 0 ? 0 : theGrid[up][right];
+    const bottomLeft = down > outer ? 0 : theGrid[down][left];
+    const bottomRight = down > outer ? 0 : theGrid[down][right];
 
     const totalNeighbour = [
-      leftN,
-      rightN,
+      leftNeighbour,
+      rightNeighbour,
       top,
       bottom,
       topLeft,
@@ -103,7 +103,6 @@ class Game extends Component {
   }
 
   determineSurvivors(neighbours, isAlive) {
-    //console.log('neighbours', neighbours);
     switch (true) {
       case neighbours > 3:
         return false;
