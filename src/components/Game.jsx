@@ -72,11 +72,14 @@ class Game extends Component {
   }
 
   findNeighbours(theGrid, x, y) {
+    //TODO the directions only change the value to 0 not the score
     const outer = theGrid.length - 1;
-    let up = x + 1 > outer ? 0 : x + 1;
-    let right = y + 1 > outer ? 0 : y + 1;
-    let left = y - 1 < 0 ? 0 : y - 1;
-    let down = x - 1 < 0 ? 0 : x - 1;
+    if (y + 1 > outer || y - 1 < 0 || x + 1 > outer || x - 1 < 0) return 0;
+
+    let up = x + 1;
+    let right = y + 1;
+    let left = y - 1;
+    let down = x - 1;
     const leftN = theGrid[x][left];
     const rightN = theGrid[x][right];
     const top = theGrid[up][y];
