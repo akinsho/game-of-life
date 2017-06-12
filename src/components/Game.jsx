@@ -1,19 +1,68 @@
 import React, { Component } from 'react';
+import styled from 'styled-components';
 import Cell from './Cell.jsx';
 
+const PrimordialOoze = styled.div`
+  border: 5px solid grey;
+  background-color: black;
+  box-shadow: 0.5px 1px 0 rgba(0, 0, 0, 0.5),
+              1.0px 1.5px 0 rgba(0, 0, 0, 0.5),
+`;
+
+const Controls = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center
+`;
+
+const Stop = styled.button`
+  width: 10em;
+  height: 3em;
+  border: none;
+  box-shadow: 0 1px 0 grey;
+  margin-top: 1em;
+  font-weight: 750;
+  background-color: tomato;
+`;
+
 class Game extends Component {
+  state = {
+    loopId: null,
+    grid: [],
+    size: 600,
+    cell: {
+      height: 10,
+      width: 10
+    }
+  };
   componentDidMount() {
-    this.updateCanvas();
+    this.setState({ grid: this.grid, loopId: setInterval(this.loop, 200) });
   }
+
+  grid = this.createLifeAtRandom(this.state.size, this.state.cell.height);
 
   componentDidUpdate(prevProps, prevState) {
     this.updateCanvas();
   }
 
+  componentWillUnmount() {
+    this.stopLoop(this.state.loopId);
+  }
+
+  loop = () => {
+    this.updateCanvas();
+  };
+
+  stopLoop = () => {
+    clearInterval(this.state.loopId);
+  };
+
   createLifeAtRandom(gridWidth, cellArea) {
-    const possibleRows = gridWidth / cellArea;
-    const theGrid = Array.from({ length: possibleRows }, (row, i) => {
-      row = Array.from({ length: possibleRows }, column => {
+    const possibleSize = gridWidth / cellArea;
+    const theGrid = Array.from({ length: possibleSize }, (row, i) => {
+      row = Array.from({ length: possibleSize }, column => {
         column = Math.floor(Math.random() * 2);
         return column;
       });
@@ -23,80 +72,90 @@ class Game extends Component {
   }
 
   findNeighbours(theGrid, x, y) {
-    if (x + 1 > 29 || x - 1 < 0 || y + 1 > 29 || y - 1 < 0) return 0;
-    const left = theGrid[x][y - 1];
-    const right = theGrid[x][y + 1];
-    const top = theGrid[x + 1][y];
-    const bottom = theGrid[x][y + 1];
-    const topLeft = theGrid[x + 1][y - 1];
-    const topRight = theGrid[x + 1][y + 1];
-    const bottomLeft = theGrid[x - 1][y - 1];
-    const bottomRight = theGrid[x - 1][y + 1];
+    const outer = theGrid.length - 1;
+    let up = x + 1 > outer ? 0 : x + 1;
+    let right = y + 1 > outer ? 0 : y + 1;
+    let left = y - 1 < 0 ? 0 : y - 1;
+    let down = x - 1 < 0 ? 0 : x - 1;
+    const leftN = theGrid[x][left];
+    const rightN = theGrid[x][right];
+    const top = theGrid[up][y];
+    const bottom = theGrid[down][y];
+    const topLeft = theGrid[up][left];
+    const topRight = theGrid[up][right];
+    const bottomLeft = theGrid[down][left];
+    const bottomRight = theGrid[down][right];
 
     const totalNeighbour = [
-      left,
-      right,
+      leftN,
+      rightN,
       top,
       bottom,
       topLeft,
       topRight,
       bottomLeft,
       bottomRight
-    ].reduce((acc, direction) => {
-      if (direction) {
-        acc += direction;
-        return acc;
-      }
-      return acc;
-    }, 0);
+    ].reduce((acc, direction) => acc + direction, 0);
     return totalNeighbour;
   }
 
-  aliveOrDead(neighbours) {
+  determineSurvivors(neighbours, isAlive) {
+    //console.log('neighbours', neighbours);
     switch (true) {
       case neighbours > 3:
         return false;
-      case neighbours >= 2:
-        return true;
       case neighbours === 3:
         return true;
       case neighbours === 2:
+      case neighbours === 2 && isAlive:
         return true;
-      case neighbours < 2:
+      case neighbours < 2 && isAlive:
         return false;
       default:
-        return true;
+        return false;
     }
   }
 
   updateCanvas() {
-    const grdH = 600;
-    const grdW = 600;
+    const { height, width } = this.state.cell;
     const ctx = this.refs.canvas.getContext('2d');
     ctx.clearRect(0, 0, 600, 600);
-    //Draw Children
-    //console.log('createArray', this.createLifeAtRandom(grdW, 20));
-    const initGrid = this.createLifeAtRandom(grdW, 20);
-    initGrid.forEach((rowElement, i) => {
-      if (Array.isArray(rowElement)) {
-        rowElement.forEach((item, j) => {
-          if (item === 1) {
-            let neighbours = this.findNeighbours(initGrid, i, j);
-            let alive = this.aliveOrDead(neighbours);
-            if (alive) {
-              Cell({ ctx, x: 20 * i, y: 20 * j });
-            }
-          }
-        });
-      }
-    });
+    //Draw Children - this is a Mutation as grid is perpetually reassigned;
+    this.grid = this.grid.map(
+      (rowElement, i) =>
+        Array.isArray(rowElement)
+          ? rowElement.map((item, j) => {
+              let wasAlive = this.state.grid[i][j] === 1 && item === 0;
+              let isAlive = item === 1;
+              let neighbours = this.findNeighbours(this.grid, i, j);
+              let shouldLive = this.determineSurvivors(neighbours, isAlive);
+              if (wasAlive || isAlive) {
+                if (shouldLive) {
+                  item = 1;
+                  Cell({ ctx, height, width, x: height * i, y: height * j });
+                } else {
+                  item = 0;
+                }
+              }
+              return item;
+            })
+          : new Error('the Grid must be an array of arrays')
+    );
+    //console.log('theGrid', this.grid);
   }
 
   render() {
     return (
-      <div>
-        <canvas ref="canvas" width={600} height={600} />
-      </div>
+      <Controls>
+        <PrimordialOoze>
+          <canvas
+            ref="canvas"
+            width={this.state.size}
+            height={this.state.size}
+          />
+        </PrimordialOoze>
+        <Stop onClick={this.stopLoop}>Stop All Life</Stop>
+      </Controls>
     );
   }
 }
