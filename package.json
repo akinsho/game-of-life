@@ -9,11 +9,13 @@
     "styled-components": "^2.0.1"
   },
   "devDependencies": {
+    "flow-bin": "^0.47.0",
     "node-sass-chokidar": "^0.0.2",
     "react-scripts": "1.0.7"
   },
   "scripts": {
     "start": "react-scripts start",
+    "flow": "flow",
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "npm run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
     "build": "react-scripts build",

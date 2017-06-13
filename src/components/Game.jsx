@@ -1,3 +1,4 @@
+// @flow
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import Cell from './Cell.jsx';
@@ -29,7 +30,7 @@ const Stop = styled.button`
 
 class Game extends Component {
   state = {
-    loopId: null,
+    loopId: 0,
     grid: [],
     size: 600,
     cell: {
@@ -43,12 +44,12 @@ class Game extends Component {
 
   grid = this.createLifeAtRandom(this.state.size, this.state.cell.height);
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate() {
     this.updateCanvas();
   }
 
   componentWillUnmount() {
-    this.stopLoop(this.state.loopId);
+    this.stopLoop();
   }
 
   loop = () => {
@@ -59,7 +60,7 @@ class Game extends Component {
     clearInterval(this.state.loopId);
   };
 
-  createLifeAtRandom(gridWidth, cellArea) {
+  createLifeAtRandom(gridWidth: number, cellArea: number) {
     const possibleSize = gridWidth / cellArea;
     const theGrid = Array.from({ length: possibleSize }, (row, i) => {
       row = Array.from({ length: possibleSize }, column => {
@@ -71,7 +72,7 @@ class Game extends Component {
     return theGrid;
   }
 
-  findNeighbours(theGrid, x, y) {
+  findNeighbours(theGrid, x: number, y: number) {
     //TODO the directions only change the value to 0 not the score
     const outer = theGrid.length - 1;
     const xOutOfBounds = x === 0 || x === outer;
@@ -80,7 +81,7 @@ class Game extends Component {
     let right = y + 1;
     let left = y - 1;
     let down = x + 1;
-    const leftNeighbour = left ? 0 : theGrid[x][left];
+    const leftNeighbour = left < 0 ? 0 : theGrid[x][left];
     const rightNeighbour = right > outer ? 0 : theGrid[x][right];
     const top = up < 0 ? 0 : theGrid[up][y];
     const bottom = down > outer ? 0 : theGrid[down][y];
@@ -102,7 +103,7 @@ class Game extends Component {
     return totalNeighbour;
   }
 
-  determineSurvivors(neighbours, isAlive) {
+  determineSurvivors(neighbours: number, isAlive: boolean) {
     switch (true) {
       case neighbours > 3:
         return false;
@@ -123,13 +124,14 @@ class Game extends Component {
     const ctx = this.refs.canvas.getContext('2d');
     ctx.clearRect(0, 0, 600, 600);
     //Draw Children - this is a Mutation as grid is perpetually reassigned;
+    this.mirrorGrid = this.grid;
     this.grid = this.grid.map(
       (rowElement, i) =>
         Array.isArray(rowElement)
           ? rowElement.map((item, j) => {
-              let wasAlive = this.state.grid[i][j] === 1 && item === 0;
-              let isAlive = item === 1;
-              let neighbours = this.findNeighbours(this.grid, i, j);
+              let wasAlive: boolean = this.state.grid[i][j] === 1 && item === 0;
+              let isAlive: boolean = item === 1;
+              let neighbours: number = this.findNeighbours(this.grid, i, j);
               let shouldLive = this.determineSurvivors(neighbours, isAlive);
               if (wasAlive || isAlive) {
                 if (shouldLive) {
